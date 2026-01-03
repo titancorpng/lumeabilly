@@ -3,13 +3,13 @@ import { useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
 import { Layout } from "@/components/Layout";
-import { useCart, DELIVERY_COST } from "@/lib/cart";
+import { useCart } from "@/lib/cart";
 import { formatPrice } from "@/lib/products";
 import { toast } from "sonner";
 
 const Checkout = () => {
   const navigate = useNavigate();
-  const { items, getSubtotal, getTotal, clearCart } = useCart();
+  const { items, getSubtotal, getDeliveryFee, getTotal, clearCart } = useCart();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     firstName: "",
@@ -22,6 +22,7 @@ const Checkout = () => {
   });
 
   const subtotal = getSubtotal();
+  const deliveryFee = getDeliveryFee();
   const total = getTotal();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -31,6 +32,37 @@ const Checkout = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+
+    // Create order data
+    const orderData = {
+      orderNumber: `LUM${Date.now().toString().slice(-8)}`,
+      date: new Date().toLocaleDateString('en-NG', { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      }),
+      time: new Date().toLocaleTimeString('en-NG', {
+        hour: '2-digit',
+        minute: '2-digit'
+      }),
+      customer: {
+        name: `${formData.firstName} ${formData.lastName}`,
+        email: formData.email,
+        phone: formData.phone,
+        address: `${formData.address}, ${formData.city}, ${formData.state}`
+      },
+      items: items.map(item => ({
+        name: item.product.name,
+        quantity: item.quantity,
+        price: item.product.price
+      })),
+      subtotal: subtotal,
+      deliveryFee: deliveryFee,
+      total: total
+    };
+
+    // Save order data to localStorage
+    localStorage.setItem('lastOrder', JSON.stringify(orderData));
 
     // Simulate order processing
     await new Promise((resolve) => setTimeout(resolve, 1500));
@@ -49,7 +81,7 @@ const Checkout = () => {
           </h1>
           <Link
             to="/products"
-            className="inline-block bg-primary text-primary-foreground px-8 py-4 text-sm font-medium tracking-wide uppercase hover:bg-primary/90 transition-colors"
+            className="inline-block bg-primary text-primary-foreground px-8 py-4 text-sm font-medium tracking-wide uppercase hover:bg-primary/90 transition-colors rounded-md"
           >
             Continue Shopping
           </Link>
@@ -85,7 +117,7 @@ const Checkout = () => {
               animate={{ opacity: 1, x: 0 }}
               className="lg:col-span-2 space-y-6"
             >
-              <div className="bg-card p-6 rounded-lg">
+              <div className="bg-card p-6 rounded-lg shadow-soft">
                 <h2 className="font-serif text-xl text-foreground mb-6">
                   Customer Information
                 </h2>
@@ -124,21 +156,6 @@ const Checkout = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                   <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-foreground mb-2">
-                      Email Address
-                    </label>
-                    <input
-                      type="email"
-                      id="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleChange}
-                      required
-                      className="w-full px-4 py-3 bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                    />
-                  </div>
-
-                  <div>
                     <label htmlFor="phone" className="block text-sm font-medium text-foreground mb-2">
                       Phone Number
                     </label>
@@ -155,7 +172,7 @@ const Checkout = () => {
                 </div>
               </div>
 
-              <div className="bg-card p-6 rounded-lg">
+              <div className="bg-card p-6 rounded-lg shadow-soft">
                 <h2 className="font-serif text-xl text-foreground mb-6">
                   Delivery Address
                 </h2>
@@ -215,7 +232,7 @@ const Checkout = () => {
             <motion.div
               initial={{ opacity: 0, x: 30 }}
               animate={{ opacity: 1, x: 0 }}
-              className="bg-card p-6 rounded-lg h-fit"
+              className="bg-card p-6 rounded-lg h-fit shadow-soft"
             >
               <h2 className="font-serif text-xl text-foreground mb-6">
                 Order Summary
@@ -251,7 +268,7 @@ const Checkout = () => {
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Delivery</span>
-                  <span className="text-foreground">{formatPrice(DELIVERY_COST)}</span>
+                  <span className="text-foreground">{formatPrice(deliveryFee)}</span>
                 </div>
                 <div className="border-t border-border pt-3">
                   <div className="flex justify-between font-medium">
@@ -264,13 +281,13 @@ const Checkout = () => {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full bg-primary text-primary-foreground py-4 flex items-center justify-center text-sm font-medium tracking-wide uppercase hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-primary text-primary-foreground py-4 flex items-center justify-center text-sm font-medium tracking-wide uppercase hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed rounded-md"
               >
                 {isSubmitting ? "Processing..." : "Place Order"}
               </button>
 
               <p className="text-xs text-muted-foreground text-center mt-4">
-                Payment on delivery. You will pay when your order arrives.
+                Pay before or on delivery.
               </p>
             </motion.div>
           </div>

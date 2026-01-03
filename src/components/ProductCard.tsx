@@ -48,11 +48,21 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
             
             {/* Hover Overlay */}
             <motion.div
-              className="absolute inset-0 bg-primary/20 flex items-center justify-center"
+              className="absolute inset-0 bg-primary/20 flex flex-col items-center justify-center gap-2"
               initial={{ opacity: 0 }}
               animate={{ opacity: isHovered ? 1 : 0 }}
               transition={{ duration: 0.3 }}
             >
+              {product.size && (
+                <motion.span
+                  className="text-sm text-muted-foreground"
+                  initial={{ y: -10, opacity: 0 }}
+                  animate={{ y: isHovered ? 0 : -10, opacity: isHovered ? 1 : 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  {product.size}
+                </motion.span>
+              )}
               <motion.button
                 onClick={handleAddToCart}
                 className="bg-primary text-primary-foreground px-6 py-3 flex items-center gap-2 text-sm font-medium tracking-wide"
@@ -85,9 +95,17 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
               </span>
             </div>
 
+            {/* Product Name & Size */}
             <h3 className="font-serif text-lg text-foreground group-hover:text-primary transition-colors">
-              {product.name}
+              {product.name}{" "}
+              {product.size && (
+                <span className="text-sm text-muted-foreground">
+                  ({product.size})
+                </span>
+              )}
             </h3>
+
+            {/* Price */}
             <p className="text-primary font-medium mt-1">
               {formatPrice(product.price)}
             </p>

@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Star, ShoppingBag, ArrowLeft, Check } from "lucide-react";
 import { Layout } from "@/components/Layout";
 import { ProductCard } from "@/components/ProductCard";
@@ -11,6 +12,7 @@ const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
   const product = getProductById(id || "");
   const addItem = useCart((state) => state.addItem);
+  const [isHovered, setIsHovered] = useState(false);
 
   if (!product) {
     return (
@@ -51,12 +53,24 @@ const ProductDetail = () => {
             initial={{ opacity: 0, x: -30 }}
             animate={{ opacity: 1, x: 0 }}
             className="relative aspect-square rounded-lg overflow-hidden bg-card"
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
           >
-            <img
-              src={product.image}
-              alt={product.name}
-              className="w-full h-full object-cover"
-            />
+            <AnimatePresence mode="wait">
+              <motion.img
+                key={isHovered ? "hover" : "default"}
+                src={isHovered ? product.hoverImage : product.image}
+                alt={product.name}
+                className="w-full h-full object-cover"
+                initial={{ opacity: 0 }}
+                animate={{ 
+                  opacity: 1,
+                  scale: isHovered ? 1.05 : 1,
+                }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.5 }}
+              />
+            </AnimatePresence>
           </motion.div>
 
           {/* Product Info */}
@@ -115,7 +129,7 @@ const ProductDetail = () => {
             {/* Add to Cart */}
             <button
               onClick={handleAddToCart}
-              className="w-full bg-primary text-primary-foreground py-4 flex items-center justify-center gap-3 text-sm font-medium tracking-wide uppercase hover:bg-primary/90 transition-colors"
+              className="w-full bg-primary text-primary-foreground py-4 flex items-center justify-center gap-3 text-sm font-medium tracking-wide uppercase hover:bg-primary/90 transition-colors rounded-md"
             >
               <ShoppingBag className="h-5 w-5" />
               Add to Cart
